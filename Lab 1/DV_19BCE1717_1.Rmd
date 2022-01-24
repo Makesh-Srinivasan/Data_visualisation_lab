@@ -1,503 +1,344 @@
 ---
-title: "Lab 1: Introduction to R"
+title: "Lab 1: Lattice package"
 author: "Makesh Srinivasan"
-date: "1/7/2022"
+date: "1/22/2022"
 output: html_document
 ---
-<center><h1>Data visualisation</h1></center><br>
+
+<h3>Data visualisation</h3><br>
 Registration number: 19BCE1717<br>
-Faculty: Prof. Pavithra R<br>
+Faculty: Prof. Parvathi R<br>
 Slot: L55 + L56<br>
 Course code: CSE3020 <br>
-
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-*** 
-## Part 1: Basic Datatypes in R
-```{r}
-rm(list=ls())
-#1) Assign a decimal value to a variable A and display it.
-A <- 10.5
-print(A)
-#2) Print the class name of the variable A.
-print(class(A))
-#3) Check whether the variable A is of type 'numeric'.
-print(is.numeric(A))
-#4) Assign an integer value to a variable B and display it.
-B <- 5L
-print(B)
-#5) Check whether the variable B is of type 'integer'.
-print(is.integer(B))
-#6) Create a variable C which stores the integer part of variable A.
-C=as.integer(A)
-print(C)
-#7) Compute the cost of a chocolate.
-cost <- C/B
-print(cost)
-#8) Represent the money as character string.
-as.character(A)
-#9) Store the first name and last name of the kid.
-fname="Ram"
-lname="kumar"
-print(is.integer(fname))
-#10) Display the message "Ram bought <B> chocolates"
-print(sprintf("%s bought %d chocolates", paste(fname,lname), B))
-#11) Extract the substring "Little" from the rhymes.
-rhymes="Twinkle Twinkle Little Star"
-print(substr(rhymes,start=17,stop=22))
-#12) Replace "Little" as Big.
-print(sub("Little", "Big", rhymes))
-#13) Assign a complex number to a variable X.
-X <- 2+4i
-X
-#14) Display the real part of X.
-print(Re(X))
-#15) Display the imaginary part of X.
-print(Im(X))
-#16) Compute square root of a negative number
-print(sqrt(as.complex(-2))) #sqrt(-2+0i) also works
-#17) Check whether real part of X is greater than its imaginary part.
-chk <- Re(X)>Im(X)
-print(chk)
-```
+***
+
+## Instructions:
+Explore the lattice package in R using the HSB2 dataset and the builtin MTCars dataset. Run the code given in class <br>
+
+
+## Sections:
+* <a href="#part1">Part 1: HSB2 dataset</a>
+* <a href="#part2">Part 2: MTCars dataset</a>
 
 ***
 
-## Part 2: Working with vectors
-```{r}
-rm(list=ls())
-#1. Create vector 'class' to store the class names 'class1','class2',.,'class5'
-class=c("class1", "class2","class3","class4","class5")
-print(class)
-#2. Use assign() function to create a vector 'avg' to store the average marks.
-assign("avg",c(63.5,72.3,88.9,65.4,79.8))
-print(avg)
-#3. Display the average mark of class2.
-print(avg[2])
-#4. Combine the vectors 'class' and 'avg' as details.
-details=c(class,avg)
-print(details)
-#5. Find the length of combined vector 'details'.
-print(length(details))
-#6. Find the minimum average mark and print the class which scored it.
-print(min(avg))
-print(class[which.min(avg)]) #which.min(avg)returns the index of the minimum value in vector avg
-#7. Find the maximum average mark and print the class which scored it.
-print(max(avg))
-print(class[which.max(avg)])
-#8. Find the total of average marks scored by all classes.
-print(sum(avg))
-#9. Find the mean of the average marks scored by all classes.
-print(mean(avg))
-#10. Find the standard deviation of the average marks scored by all classes.
-print(sd(avg))
-#11. Arrange the average marks in ascending order.
-print(sort(avg))
-#12. Create a vector classes by repeat the vector class twice.
-classes <- rep(class,times=2)
-print(classes)
-#13. Create a vector marks by repeating each average mark twice.
-marks <- rep(avg,each=2)
-print(marks)
-#14. Create a sequence of 10 to 1. Add it to the vector avg and display it.
-s=seq(10,1)
-print(avg+s)
-#15. Create a vector bool that contains logical values 'TRUE' or 'FALSE' depending on the condition average marks>70.
-bool=avg>70
-print(class[bool])
-```
+<h2 id="part1">PART 1: HSB2 dataset</h2>
 
-***
-
-## Part 3: Working with matrix
-```{r}
-rm(list=ls())
-#1. Represent the height information of a team of 12 basketball players as a matrix of dimension 4x3 in row major form.
-height=matrix(c(162,173,160,181,159,176,183,162,181,160,170,172),nrow=4,ncol=3,byrow=TRUE)
-print(height)
-#2. Display the height at row 3 and column 2.
-print(height[3,2])
-#3. Display all the heights in row 2.
-print(height[2,])
-#Display all the heights in column 3.
-print(height[,3])
-#5. Extract the heights in all rows but only in column 1 and 3.
-print(height[,c(1,3)])
-#6. Find the transpose of the matrix.
-print(t(height))
-#7. Four more players got added to the team. Update the matrix to reflect the heights of the players.
-height=cbind(height,c(176,168,161,172))
-print(height)
-#8. Append four more players' height in the matrix.
-height=rbind(height,c(175,162,170,165))
-print(height)
-
-```
-
-***
-
-## Part 4: R commands from the PPT
-
-***
-
-##### Basic mathematical operations:
-```{r}
-# Root
-print(sqrt(2))
-
-# Log
-print(log(2))
-
-# Assignment and arithmetic (+) operation
-x = 5
-y = 10
-z <- x + y
-print(z)
-
-# floor:
-floor(5.555)
-
-# round:
-round(5.555)
-```
-
-##### Generate a vector with common difference:
-```{r}
-v = seq(1,5, by=.5)
-v
-```
-
-##### Vector operations:
-```{r}
-v1 = c(6,5,4,3,2,1)
-v2 = c(10,9,8,7,6,5)
-
-# Arithmetic operation on the vectors
-v3 = v1 + v2
-print(v3)
-
-vector = c(5,1,46,5,4,3,2,1)
-sorted_vector <- sort(vector)
-
-# Sort
-sorted_vector
-
-# Rank
-rank(vector)
-
-# Order
-order(vector)
-
-# Which
-which(vector == 16)
-```
-
-##### Operations of V3 vector:
-```{r}
-# I have also used the paste and print functions here
-print("Operations of V3 vector")
-print(paste("Maximum = ", max(v3)))
-print(paste("Minimum = ", min(v3)))
-print(paste("Mean = ", mean(v3)))
-print(paste("Standard deviation = ", sd(v3)))
-print(paste("Length of the vector V3 = ", length(v3)))
-```
-
-##### Sampler:
-```{r}
-#Without replacement
-sample(1:40, 5)
-
-#With replacement
-sample(1:50, 10, replace=T)
-```
-
-##### R bind:
-```{r}
-a <- c(1, 2, 3, 4, 5)
-b <- c(6, 7, 8, 9, 10)
-r_matrix <- rbind(a, b)
-r_matrix
-```
-
-##### C Bind:
-```{r}
-c_matrix <- cbind(a, b)
-c_matrix
-```
-
-##### Repetition to create a vector:
-```{r}
-rep(c(1:4), 3)
-```
-
-##### Random number generator with levels:
-```{r}
-gl(2, 10, length=20)
-```
-
-<center><h3>Dataframe</h3></center>
-
-##### Inbuilt: Import and load the Iris dataset from the MASS package:
-
-```{r}
-library("MASS")
-data(iris)
-head(iris, 5)
-```
-
-##### User generated dataframe:
-
-```{r}
-students <- c("Makesh", "Anthra", "Bettina", "Chandhru", "Shyam")
-event_1 <- c(10,10,6,8,10)
-event_2 <- c(5,7,9,0,0)
-event_3 <- c(7,9,0,8,6)
-event_4 <- c(9,7,8,10,10)
-data <- data.frame(students, event_1, event_2, event_3, event_4)
-data
-```
-
-##### Read from the directory:
-```{r}
-directory_read <- read.csv("sample.csv")
-head(directory_read)
-```
-
-##### Explore the dataset using common functions
-
-Dimensions:
-```{r}
-dim(iris)
-```
-
-Structure:
-```{r}
-str(iris)
-```
-
-Use table() function:
-```{r}
-table(iris$Sepal.Length)
-```
-
-Names and attributes:
-```{r}
-names(iris)
-attributes(iris)
-```
-
-Tail and head (3) tuples:
-```{r}
-head(iris, 3)
-tail(iris, 3)
-```
-
-Summary:
-```{r}
-summary(iris)
-```
-
-Quantile:
-```{r}
-quantile(iris$Sepal.Length)
-quantile(iris$Sepal.Length, c(.1, .3, .65)) # choose the quantiles
-```
-
-Variance:
-```{r}
-var(iris$Sepal.Length)
-```
-
-Covariance:
-```{r}
-cov(iris$Sepal.Length, iris$Petal.Length)
-```
-
-Covariance matrix:
-```{r}
-cov(iris[,1:4])
-
-```
-
-Correlation and correlation matrix:
-```{r}
-cor(iris$Sepal.Length, iris$Petal.Length)
-cor(iris[,1:4])
-```
-
-Aggregate:
-```{r}
-aggregate(Sepal.Length ~ Species, summary, data=iris)
-```
-
-
-##### apply():
-```{r}
-m <- matrix(C<-(1:10),nrow=5, ncol=5)
-#Matrix:
-m
-
-#Apply()
-apply(m, 2, sum)
-```
-
-##### lapply():
-```{r}
-names <- c("NAME1","NAME2","NAME3","NAME4")
-names_lower <-lapply(names, tolower)
-str(names_lower)
-```
-
-##### sapply():
-```{r}
-#same as lapply but a vector is returned
-smn <- sapply(iris$Sepal.Length, min)
-smn
-```
-
-***
-
-<center><h3>Probability distribution</h3></center>
-
-##### Binomial distribution:
-```{r}
-dbinom(2, 3, 0.60)
-```
-
-##### Poisson distribution:
-```{r}
-dpois(2, 1)
-```
-
-##### Normal probability distribution:
-```{r}
-pnorm(150, 156, 4.6)
-```
-
-***
-
-<center><h3>Plots</h3></center>
-
-##### Histogram:
-```{r}
-hist(iris$Sepal.Length)
-```
-##### Density plot:
-```{r}
-plot(density(iris$Sepal.Length))
-```
-##### Pie chart:
-```{r}
-pie(table(iris$Species)) 
-```
-##### Barplot:
-```{r}
-barplot(table(iris$Species))
-```
-##### Boxplot:
-Individual:
-```{r}
-boxplot(iris$Sepal.Length)
-```
-
-Grouped:
-```{r}
-boxplot(iris$Sepal.Length,iris$Sepal.Width)
-```
-
-```{r}
-boxplot(Sepal.Length~Species, data=iris)
-```
-##### Species-wise scatter plot: 
-```{r}
-with(iris, plot(Sepal.Length, Sepal.Width, col=Species, pch=as.numeric(Species)))
-```
-##### Pair plot:
-```{r}
-pairs(iris)
-```
-
-##### 3D plots:
-```{r}
-# Import a library to view 3d plots
-library("scatterplot3d")
-
-scatterplot3d(iris$Petal.Width, iris$Sepal.Length, iris$Sepal.Width)
-```
-##### Heatmap
-```{r}
-distMatrix <- as.matrix(dist(iris[,1:4]))
-heatmap(distMatrix)
-```
-##### Contour plot:
-```{r}
-filled.contour(volcano, color=terrain.colors, asp=1,plot.axes=contour(volcano, add=T))
-```
-##### Parallel coordinates:
-```{r}
-parcoord(iris[1:4], col=iris$Species)
-```
-##### Parallel plots:
+##### Import required package and dataset:
 ```{r}
 library(lattice)
-parallelplot(~iris[1:4] | Species, data=iris)
+df = read.csv("hsb2.csv")
+head(df, 5)
 ```
 
-##### Line plot:
+##### Create factors with value labels
 ```{r}
-plot(iris$Sepal.Length, iris$Sepal.Width, type="l") 
+ses.f <-factor(df$ses,levels=c(1,2,3),
+labels=c("ses_1","ses_2","ses_3"))
+
+prog.f <-factor(df$prog,levels=c(1,2,3),
+labels=c("prog_1","prog_2","prog_3"))
 ```
 
-##### Panelling graphs:
+##### xy Scatter plot
 ```{r}
-par(mfrow=c(2,2))
-hist(iris$Sepal.Length, main='Histogram',xlab='Sepal length', ylab ='Frequency', col=heat.colors(14))
+xyplot(df$read~df$write)
+```
 
-boxplot(iris$Sepal.Length, iris$Sepal.Width, iris$Petal.Length, iris$Petal.Width,  main='Iris boxplot of features', ylab='f',xlab='Shift', names = c('mm','mm','mm','mm'))
+##### Scatterplots for each combination of two factors
+```{r}
+xyplot(df$read~df$write|ses.f*prog.f,
+main="Scatterplots by Cylinders and Gears",
+ylab="Miles per Gallon", xlab="Car Weight")
+```
 
-plot(iris$Sepal.Length,iris$Sepal.Width,main='Sepal length vs width', xlab='mm',ylab='mm',pch=2)
-plot(iris$Petal.Length,iris$Sepal.Length,type="l",main='petal vs sepal length',xlab='mm',ylab='mm')
-lines(iris$Petal.Length,iris$Sepal.Length,lty=2)
+##### XYplot
+```{r}
+xyplot(read~write,
+       data = df,
+       type = c("p", "r"),
+       main = "Relation between Read and Write",
+       xlab = "Read Score",
+       ylab = "Write Score")
+```
 
+
+##### Multivariate xy scatter plot with customizations
+
+```{r}
+xyplot(df$read~df$write | ses.f,
+       data = df,
+       type = c("p", "r"),
+       groups = ses.f,
+       main = "Relation between Read and Write",
+       xlab = "Read Score",
+       ylab = "Write Score")
+```
+
+
+##### Kernel density plot
+```{r}
+densityplot(~df$read,
+main="Density Plot",
+xlab="Read score")
+```
+
+##### Kernel density plots by factor level
+```{r}
+densityplot(~df$read|ses.f, data = df,
+main="Read Score by SES",
+xlab="Read Score")
+```
+
+
+
+##### Kernel density plots by factor level (alternate layout)
+```{r}
+densityplot(~df$read|ses.f,
+main="Density Plot by SES",
+xlab="Read score",
+layout=c(1,3))
+```
+
+##### Kernel Density Plot together for all factors without points
+```{r}
+densityplot(~df$read,
+groups = ses.f,
+plot.points = FALSE,
+main = "Kernel density plot over SES",
+xlab = "Read score")
+```
+
+##### Boxplot
+```{r}
+bwplot(prog.f ~ df$read | ses.f,
+xlab = "SES",
+ylab = "Prog",
+Main = "Prog given by SES")
+```
+
+
+##### Boxplots for each combination of two factors
+```{r}
+bwplot(ses.f~df$read|prog.f,
+ylab="SES", xlab="PROG",
+main ="SES and Prog")
+```
+
+
+##### Boxplot associated with multiple variables and alternate layout
+```{r}
+bwplot(prog.f ~ df$read |ses.f,
+xlab = "READ score",
+ylab = "PROG",
+Main = "SES and read score",
+layout = c(1, 3))
+```
+
+
+##### 3D plot
+```{r}
+# 3 d plot
+cloud(df$socst~df$science*df$math,main = "3D scatterplot")
+```
+
+
+##### 3d scatterplot by factor level
+```{r}
+cloud(df$science~df$math*df$socst|ses.f,
+main="3D Scatterplot by SES")
+```
+
+##### Dotplot for each combination of two factors
+```{r}
+dotplot(ses.f~df$read|prog.f,
+main="Dotplot Plot by SES and prog",
+xlab="Read score")
+```
+
+
+##### Scatterplot matrix
+```{r}
+splom(df[c(1,3,4,5,6)],
+main="hsb2 Data")
+bwplot(prog.f ~ df$read | ses.f,
+data = df,
+xlab = "Read score",
+ylab = "PROG",
+Main = "PROG and SES",
+panel = panel.violin)
+```
+
+##### Contour plot
+```{r}
+data <- dimnames(volcano)
+contour(x=volcano, xlab = "Row", ylab = "Column") # Contour plot for volcano dataset
+filled.contour(volcano)
+filled.contour(volcano,color.palette = terrain.colors)
 ```
 
 ***
 
-<center><h3>Loops, functions and conditionals</h3></center>
-
-##### Functions, loops and conditionals:
-```{r}
-# I made a palindrome checker to perform all three things mentioned above.
-
-isplaindrome <- function(n){
-    reverse = 0
-    buff = n
-    while (n > 0) {
-      r = n %% 10
-      reverse = reverse * 10 + r
-      n = n %/% 10
-    }
-    if (reverse == buff)
-    {
-      print(paste("It is palindrome!", reverse))
-    }
-    else{
-      print(paste("Not a palindrome", reverse))
-    }
-}
-
-## Call the function:
-isplaindrome(12345) # should return "Not a palindrome"
-isplaindrome(123321) # should return "It is palindrome!"
-```
-
-<br>
-<br>
-NOTE: The clustering parts are not yet covered in class and will be presented in the later lab exercises
+<center><h3>The same is repeated using the MTCars dataset below</h3></center><br>
 
 ***
+
+<h2 id="part2">PART 2: MTCars datset</h2>
+##### Import necessary package and datset:
+```{r}
+library(lattice) # already imported from part 1
+attach(mtcars)
+mtcars
+```
+
+##### Create factors with value labels
+```{r}
+gear.f<-factor(gear,levels=c(3,4,5),
+labels=c("3gears","4gears","5gears"))
+cyl.f <-factor(cyl,levels=c(4,6,8),
+labels=c("4cyl","6cyl","8cyl"))
+```
+
+##### xy Scatter plot
+```{r}
+xyplot(mpg~wt)
+```
+
+##### Scatterplots for each combination of two factors
+```{r}
+xyplot(mpg~wt|cyl.f*gear.f,
+main="Scatterplots by Cylinders and Gears",
+ylab="Miles per Gallon", xlab="Car Weight")
+```
+
+##### XYplot
+```{r}
+#XYplot 1
+xyplot(mpg~wt,
+data = mtcars,
+type = c("p", "r"),
+main = "Relation between wt and mpg",
+xlab = "Weight in lbs",
+ylab = "Miles/Gallon (US)")
+
+#XYplot 2
+xyplot(mpg~wt | cyl.f,
+type = c("p", "r"),
+groups = cyl.f,
+main = "Relation between wt and mpg over cylinders",
+xlab = "Weight in lbs",
+ylab = "Miles/Gallon (US)")
+```
+
+##### Multivariate xy scatter plot with customizations
+```{r}
+xyplot(mpg~wt | cyl.f,
+type = c("p", "r"),
+groups = cyl.f,
+main = "Relation between wt and mpg over cylinders",
+xlab = "Weight in lbs",
+ylab = "Miles/Gallon (US)")
+```
+
+##### Kernel density plot
+```{r}
+densityplot(~mpg,
+main="Density Plot",
+xlab="Miles per Gallon")
+```
+
+##### Kernel density plots by factor level
+```{r}
+densityplot(~mpg|cyl.f,
+main="Density Plot by Number of Cylinders",
+xlab="Miles per Gallon")
+```
+
+##### Kernel density plots by factor level (alternate layout)
+```{r}
+densityplot(~mpg|cyl.f,
+main="Density Plot by Numer of Cylinders",
+xlab="Miles per Gallon",
+layout=c(1,3))
+```
+
+##### Kernel Density Plot together for all factors without points
+```{r}
+densityplot(~mpg,
+groups = gear.f,
+plot.points = FALSE,
+main = "Kernel density plot over number of gears",
+xlab = "Miles Per Gallon (US)")
+```
+
+##### Boxplot
+```{r}
+bwplot(gear.f ~ mpg | cyl.f,
+xlab = "Miles per Gallon (US)",
+ylab = "No of Gears",
+Main = "Mileage by no. of gears and cylinders")
+```
+
+##### Boxplots for each combination of two factors
+```{r}
+bwplot(cyl.f~mpg|gear.f,
+ylab="Cylinders", xlab="Miles per Gallon",
+main ="Mileage by Cylinders and Gears")
+```
+
+##### Boxplot associated with multiple variables and alternate layout
+```{r}
+bwplot(gear.f ~ mpg |cyl.f,
+xlab = "Miles per Gallon (US)",
+ylab = "No of Gears",
+Main = "Mileage by no. of gears and cylinders",
+layout = c(1, 3))
+```
+
+##### 3D plot
+```{r}
+# 3 d plot
+cloud(mpg~wt*qsec,main = "3D scatterplot")
+```
+
+##### 3d scatterplot by factor level
+```{r}
+cloud(mpg~wt*qsec|cyl.f,
+main="3D Scatterplot by Cylinders")
+```
+
+##### Dotplot for each combination of two factors
+```{r}
+dotplot(cyl.f~mpg|gear.f,
+main="Dotplot Plot by Number of Gears and Cylinders",
+xlab="Miles Per Gallon")
+```
+
+##### Scatterplot matrix
+```{r}
+splom(mtcars[c(1,3,4,5,6)],
+main="MTCARS Data")
+bwplot(gear.f ~ mpg | cyl.f,
+data = mtcars,
+xlab = "Miles per Gallon (US)",
+ylab = "No of Gears",
+Main = "Mileage by no. of gears and cylinders",
+panel = panel.violin)
+```
+
+##### Contour plot
+```{r}
+data <- dimnames(volcano)
+contour(x=volcano, xlab = "Row", ylab = "Column") # Contour plot for volcano dataset
+filled.contour(volcano)
+filled.contour(volcano,color.palette = terrain.colors)
+```
+
+***
+
 
