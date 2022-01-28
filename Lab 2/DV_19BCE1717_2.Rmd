@@ -1,0 +1,846 @@
+---
+title: "Lab 2: ggplot2 package"
+author: "Makesh Srinivasan"
+date: "1/28/2022"
+output: html_document
+---
+
+<h3>Data visualisation</h3><br>
+Registration number: 19BCE1717<br>
+Faculty: Prof. Parvathi R<br>
+Slot: L55 + L56<br>
+Course code: CSE3020 <br>
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+***
+
+## Instructions:
+Explore the ggplot2 package in R using a dataset of your choice and the midwest dataset used in class. Run the code given in class <br>
+
+
+## Sections:
+* <a href="#part1">Part 1: Survey dataset (data of your choice)</a>
+  - <a href="#part11">Preprocessing and data cleaning</a>
+  - <a href="#part12">Visualisation using ggplot2</a>
+* <a href="#part2">Part 2: MTCars and Midwest dataset (from class)</a>
+
+***
+
+<h2 id="part1">PART 1: Survey dataset</h2>
+
+<center><h4 id="part11">Preprocessing and data cleaning</h4></center>
+
+##### Import required package and dataset:
+```{r}
+#Packages
+library(ggplot2)
+library(MASS)
+library(dplyr)
+
+# Dataset from the MASS package -> survey
+# I chose this because visualising the survey based on many attributes provides more options and flexibility to explore ggplot2 package. 
+data("survey")
+data <- survey
+head(data)
+```
+
+
+##### Exploring the dataset
+Structure:
+```{r}
+str(data)
+```
+
+Dimension:
+```{r}
+dim(data)
+```
+
+Columns or attributes:
+```{r}
+colnames(data)
+```
+
+##### Data cleaning
+```{r}
+print(paste("Number of missing values = ", sum(is.na(data))))
+```
+<strong>NOTE:</strong> There are many missing values that will be filled up using data imputation techniques of mean, median and mode.
+
+##### Missing data imputation
+```{r}
+print(paste("Mean value of the column Wr.Hnd = ", mean(data$Wr.Hnd,na.rm = TRUE)))
+print(paste("Median value of Wr.Hnd = ", median(data$Wr.Hnd,na.rm = TRUE)))
+print(paste("Maximum value of Wr.Hnd = ", max(data$Wr.Hnd,na.rm = TRUE)))
+print(paste("Minimum value of Wr.Hnd = ", min(data$Wr.Hnd,na.rm = TRUE)))
+```
+The mean and median values are very close while min and max values are having a wider difference in magnitude. Hence, the use of mean or median in substituting for a NA value in this column is a good practice. After repeating this for other columns, it was found that mean/median imputation is the best choice for other columns too (when the datatype is int or numberic). I chose Mode for categorical type attributes.
+
+
+<strong>Replace numerical missig values:</strong>
+```{r}
+# used median value to replace the missing values
+data <- data %>%
+  mutate(Wr.Hnd = replace(Wr.Hnd, is.na(Wr.Hnd), median(Wr.Hnd, na.rm = TRUE)))
+data <- data %>%
+  mutate(NW.Hnd = replace(NW.Hnd, is.na(NW.Hnd), median(NW.Hnd, na.rm = TRUE)))
+data <- data %>%
+  mutate(Pulse = replace(Pulse, is.na(Pulse), median(Pulse, na.rm = TRUE)))
+
+# used mean value to replace the missing values
+data <- data %>%
+  mutate(Height = replace(Height, is.na(Height), mean(Height, na.rm = TRUE)))
+data <- data %>%
+  mutate(Age = replace(Age, is.na(Age), mean(Age, na.rm = TRUE)))
+```
+
+<strong>Replace categorical missing values:</strong>
+```{r}
+# Build a function that returns the mode of the column:
+get_mode <- function(x){
+  distinct_values <- unique(x)
+  distinct_tabulate <- tabulate(match(x, distinct_values))
+  distinct_values[which.max(distinct_tabulate)]
+}
+# Used mode values to replace the NA values
+data <- data %>% 
+  mutate(M.I = if_else(is.na(M.I), get_mode(M.I), M.I))
+data <- data %>% 
+  mutate(W.Hnd = if_else(is.na(W.Hnd), get_mode(W.Hnd), W.Hnd))
+data <- data %>% 
+  mutate(Clap = if_else(is.na(Clap), get_mode(Clap), Clap))
+data <- data %>% 
+  mutate(Smoke = if_else(is.na(Smoke), get_mode(Smoke), Smoke))
+data <- data %>% 
+  mutate(Exer = if_else(is.na(Exer), get_mode(Exer), Exer))
+data <- data %>% 
+  mutate(Sex = if_else(is.na(Sex), get_mode(Sex), Sex))
+```
+
+##### Cleaned data ready for visualisation:
+```{r}
+print(paste("Number of missing values = ", sum(is.na(data))))
+```
+
+***
+
+<center><h4 id="part12">Visualisation using ggplot2</h4></center
+
+***
+
+##### Scatterplot
+```{r}
+# Scatterplot
+gg <- ggplot(data, aes(x=Height, y=Age)) + 
+  geom_point(aes(col=Sex, size=Pulse)) + 
+  geom_smooth(method="loess", se=F) + 
+  xlim(c(130, 200)) + 
+  ylim(c(0, 100)) + 
+  labs(subtitle="Height Vs Age wrt Sex and sixe based on Pulse rate", 
+       y="Age", 
+       x="Height", 
+       title="Scatterplot", 
+       caption = "Source: survey")
+plot(gg)
+```
+
+##### Scatterplot + encircle
+```{r}
+library(ggalt)
+data_select <- data[data$Age > 18 & 
+                            data$Age <= 20 & 
+                            data$Height > 150 & 
+                            data$Height < 180, ]
+gg1<-ggplot(data, aes(x=Height, y=Age)) + 
+  geom_point(aes(col=Sex, size=Pulse)) +   # draw points
+  geom_smooth(method="loess", se=F) + 
+  geom_encircle(aes(x=Height, y=Age), 
+                data=data_select, 
+                color="red", 
+                size=2, 
+                expand=0.08) +   # encircle
+  labs(subtitle="Height Vs Age", 
+       y="Age", 
+       x="Height", 
+       title="Scatterplot + Encircle", 
+       caption="Source: data")
+plot(gg1)
+```
+
+##### Geom_smooth line
+```{r}
+g <- ggplot(data, aes(Wr.Hnd, NW.Hnd))
+g + geom_point() + 
+  geom_smooth(method="lm", se=F) +
+    labs(subtitle="Wr.Hnd vs NW.Hnd", 
+       y="Wr.Hnd", 
+       x="NW.Hnd", 
+       title="Scatterplot with overlapping points", 
+       caption="Source: data")
+```
+
+##### Jittered points
+```{r}
+g <- ggplot(data, aes(Wr.Hnd, NW.Hnd))
+g + geom_jitter(width = .5, size=1) +
+  labs(subtitle="Survey data: Wr.Hnd vs NW.Hnd", 
+       y="Wr.Hnd", 
+       x="NW.Hnd", 
+       title="Jittered Points")
+```
+
+##### Scatterplot (counts plot)
+```{r}
+# Scatterplot
+theme_set(theme_bw())  # pre-set the bw theme.
+g <- ggplot(data, aes(Wr.Hnd, NW.Hnd))
+g + geom_count(col="tomato3", show.legend=F) +
+  labs(subtitle="Survey data: Wr.Hnd vs NW.Hnd", 
+       y="Wr.Hnd", 
+       x="NW.Hnd", 
+       title="Counts Plot")
+```
+
+##### Bubble Plot
+```{r}
+# Bubble Plot
+data_select <- data[data$Smoke %in% c("Occas", "Regul"), ]
+g <- ggplot(data_select, aes(Height, Age)) + 
+  labs(subtitle="Survey data: Height vs Age",
+       title="Bubble chart")
+
+g + geom_jitter(aes(col=Smoke, size=Wr.Hnd)) + 
+  geom_smooth(aes(col=Smoke), method="lm", se=F)
+```
+
+##### Marginal Histogram / Boxplot
+```{r}
+# Marginal Histogram / Boxplot
+qplot(data$Pulse, geom="histogram") 
+ggplot(data=data, aes(Pulse)) + 
+  geom_histogram()
+qplot(data$Pulse,
+      geom="histogram",
+      binwidth = 1,
+      main = "Histogram for Pulse", 
+      xlab = "Age",  
+      fill=I("blue"), 
+      col=I("red"), 
+      alpha=I(.4))
+ggplot(data=data, aes(Pulse)) + 
+  geom_histogram(breaks=seq(10, 50, by=2), 
+                 col="red", 
+                 aes(fill=..count..)) +
+  scale_fill_gradient("Count", low="green", high="red")+labs(title="Histogram for data", x="Pulse", y="Count")
+ggplot(data=data, aes(Pulse)) + 
+  geom_histogram(aes(y =..density..), 
+                 breaks=seq(10, 50, by = 2), 
+                 col="red", 
+                 fill="green", 
+                 alpha=.2) + 
+  geom_density(col=2)
+```
+
+##### Stacked Bar
+```{r}
+#Stacked Bar
+g <- ggplot(data, aes(Age)) + scale_fill_brewer(palette = "Spectral")
+
+g + geom_histogram(aes(fill=Smoke), 
+                   binwidth = .1, 
+                   col="black", 
+                   size=.1) +  # change binwidth
+  labs(title="Histogram with Auto Binning", 
+       subtitle="Smokers across Age")  
+
+g + geom_histogram(aes(fill=Smoke), 
+                   bins=5, 
+                   col="black", 
+                   size=.1) +   # change number of bins
+  labs(title="Histogram with Fixed Bins", 
+       subtitle="Smokers across Age") 
+
+g <- ggplot(data, aes(Clap))
+g + geom_bar(aes(fill=Smoke), width = 0.5) + 
+  theme(axis.text.x = element_text(angle=65, vjust=0.6)) + 
+  labs(title="Histogram on Categorical Variable", 
+       subtitle="Smokers across various type of clappers") 
+```
+
+##### Density plot
+```{r}
+# Density plot
+g <- ggplot(data, aes(Pulse))
+g + geom_density(aes(fill=factor(Sex)), alpha=0.8) + 
+  labs(title="Density plot", 
+       subtitle="Pulse grouped by Sex",
+       caption="Source: survey data",
+       x="Pulse",
+       fill="Sex")
+```
+
+##### Box Plot
+```{r}
+# Box Plot
+g <- ggplot(data, aes(Smoke, Pulse))
+g + geom_boxplot(varwidth=T, fill="plum") + 
+  labs(title="Box plot", 
+       subtitle="Pulse grouped by Smokers",
+       caption="Source: survey data",
+       x="Smokers",
+       y="Pulse")
+```
+
+##### Correlation
+```{r}
+# correlation plot
+library(ggcorrplot)
+
+# Correlation matrix
+corr <- round(cor(data[,c(2,3,6,10,12)]), 1)
+corr
+```
+
+##### Plot
+```{r}
+# Plot
+ggcorrplot(corr)
+ggcorrplot(corr, method = "circle")
+ggcorrplot(corr, hc.order = TRUE, outline.col = "white")
+# Types of correlogram layout
+# --------------------------------
+# Get the lower triangle
+ggcorrplot(corr, hc.order = TRUE, type = "lower",
+           outline.col = "white")
+# Get the upeper triangle
+ggcorrplot(corr, hc.order = TRUE, type = "upper",
+           outline.col = "white")
+# Change colors and theme
+# --------------------------------
+# Argument colors
+ggcorrplot(corr, hc.order = TRUE, type = "lower",
+           outline.col = "white",
+           ggtheme = ggplot2::theme_gray,
+           colors = c("#6D9EC1", "white", "#E46726"))
+
+ggcorrplot(corr, hc.order = TRUE, 
+           type = "lower", 
+           lab = TRUE, 
+           lab_size = 3, 
+           method="circle", 
+           colors = c("tomato2", "white", "springgreen3"), 
+           title="Correlogram of mtcars", 
+           ggtheme=theme_bw)
+```
+
+##### Diverging Barcharts
+```{r}
+#Diverging bars
+data1 = data[c(1:50), ]
+data1$Sex <- rownames(data1)  # create new column for car names
+data1$Height_z <- round((data1$Height - mean(data1$Height))/sd(data1$Height), 2)  # compute normalized mpg
+data1$Height_type <- ifelse(data1$Height_z < 0, "below", "above")  # above / below avg flag
+data1 <- data1[order(data1$Height_z), ]  # sort
+data1$Sex <- factor(data1$Sex, levels = data1$Sex)  # convert to factor to retain sorted order in plot.
+
+# Diverging Barcharts
+ggplot(data1, aes(x=Sex, y=Height_z, label=Height_z)) + 
+  geom_bar(stat='identity', aes(fill=Height_type), width=.5)  +
+  scale_fill_manual(name="Height", 
+                    labels = c("Above Average", "Below Average"), 
+                    values = c("above"="#00ba38", "below"="#f8766d")) + 
+  labs(subtitle="Normalised Height from 'Survey'", 
+       title= "Diverging Bars") + 
+  coord_flip()  
+```
+
+##### Diverging Lollipop Chart
+```{r}
+# Diverging Lollipop Chart
+ggplot(data1, aes(x=Sex, y=Height_z, label=Height_z)) + 
+  geom_point(stat='identity', fill="black", size=6)  +
+  geom_segment(aes(y = 0, 
+                   x = Sex, 
+                   yend = Height_z, 
+                   xend = Sex), 
+               color = "black") +
+  geom_text(color="white", size=2) +
+  labs(title="Diverging Lollipop Chart", 
+       subtitle="Normalized height from 'survey data': Lollipop") + 
+  ylim(-2.5, 2.5) +
+  coord_flip()
+```
+
+##### Diverging Dot Plot
+```{r}
+#Diverging Dot Plot
+ggplot(data1, aes(x=Sex, y=Height_z, label=Height_z)) + 
+  geom_point(stat='identity', aes(col=Height_type), size=6)  +
+  scale_color_manual(name="Height", 
+                     labels = c("Above Average", "Below Average"), 
+                     values = c("above"="#00ba38", "below"="#f8766d")) + 
+  geom_text(color="white", size=2) +
+  labs(title="Diverging Dot Plot", 
+       subtitle="Normalized height from 'survey data': Dotplot") + 
+  ylim(-2.5, 2.5) +
+  coord_flip()
+
+```
+
+##### Pie chart
+```{r}
+# pie chart
+pie <- ggplot(data, aes(x = "", fill = factor(Smoke))) + 
+  geom_bar(width = 1) +
+  theme(axis.line = element_blank(), 
+        plot.title = element_text(hjust=0.5)) + 
+  labs(fill="Smoke", 
+       x=NULL, 
+       y=NULL, 
+       title="Pie Chart of Smokers", 
+       caption="Source: survey data")
+
+pie + coord_polar(theta = "y", start=0)
+
+```
+
+##### Violin Plot
+```{r}
+# Violin Plot
+g <- ggplot(data, aes(Smoke, Pulse))
+g + geom_violin() + 
+  labs(title="Violin plot", 
+       subtitle="Smokers vs Pulse",
+       caption="Source: survey data",
+       x="Smokers",
+       y="Pulse")
+```
+
+##### Boxplot
+```{r}
+# Boxplot
+g <- ggplot(data, aes(Smoke, Pulse))
+g + geom_boxplot(varwidth=T, fill="plum") + 
+  labs(title="Box plot", 
+       subtitle="Pulse grouped by Smokers",
+       caption="Source: survey data",
+       x="Smokers",
+       y="Pulse")
+```
+
+##### Boxplot
+```{r}
+# Boxplot
+g <- ggplot(data, aes(Smoke, Pulse))
+g + geom_boxplot(aes(fill=factor(Sex))) + 
+  theme(axis.text.x = element_text(angle=65, vjust=0.6)) + 
+  labs(title="Box plot", 
+       subtitle="Pulse grouped by Smokers",
+       caption="Source: survey data",
+       x="Smokers",
+       y="Pulse")
+```
+
+##### Dot + Box Plot
+```{r}
+#Dot + Box Plot
+g <- ggplot(data, aes(Smoke, Pulse))
+g + geom_boxplot() + 
+  geom_dotplot(binaxis='y', 
+               stackdir='center', 
+               dotsize = .5, 
+               fill="red") +
+  theme(axis.text.x = element_text(angle=65, vjust=0.6)) + 
+  labs(title="Box plot + Dot plot", 
+       subtitle="Pulse vs Smokers: Each dot represents 1 row in source data",
+       caption="Source: survey data",
+       x="Smokers",
+       y="Pulse")
+```
+
+##### Treemap
+```{r}
+library(treemapify)
+
+ggplot(data, aes(area=Pulse, fill=Smoke, subgroup=Smoke)) + 
+  geom_treemap()
+ggplot(data, aes(area=Pulse, fill=Smoke, subgroup=Smoke)) + 
+  geom_treemap()+
+  #main group bordering
+  geom_treemap_subgroup_border()+
+  #subgroup heading in white
+  geom_treemap_subgroup_text(color="white")+
+  #all other group text in black
+  geom_treemap_text(aes(label=Clap), color="black")+
+  scale_x_continuous(expand = c(0, 0)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_brewer(palette = "Dark2")
+```
+
+
+***
+
+<h2 id="part2">PART 2: MTCars and Midwest dataset (from class)</h2>
+
+***
+
+##### Import libraries and dataset
+```{r}
+library(ggplot2)
+theme_set(theme_bw())  # pre-set the bw theme.
+data("midwest")
+midwest
+```
+
+##### Scatterplot
+```{r}
+# Scatterplot
+gg <- ggplot(midwest, aes(x=area, y=poptotal)) + 
+  geom_point(aes(col=state, size=popdensity)) + 
+  geom_smooth(method="loess", se=F) + 
+  xlim(c(0, 0.1)) + 
+  ylim(c(0, 500000)) + 
+  labs(subtitle="Area Vs Population", 
+       y="Population", 
+       x="Area", 
+       title="Scatterplot", 
+       caption = "Source: midwest")
+plot(gg)
+```
+
+##### Scatterplot + Encircle
+```{r}
+library(ggalt)
+midwest_select <- midwest[midwest$poptotal > 350000 & 
+                            midwest$poptotal <= 500000 & 
+                            midwest$area > 0.01 & 
+                            midwest$area < 0.1, ]
+gg1<-ggplot(midwest, aes(x=area, y=poptotal)) + 
+  geom_point(aes(col=state, size=popdensity)) +   # draw points
+  geom_smooth(method="loess", se=F) + 
+  xlim(c(0, 0.1)) + 
+  ylim(c(0, 500000)) +   # draw smoothing line
+  geom_encircle(aes(x=area, y=poptotal), 
+                data=midwest_select, 
+                color="red", 
+                size=2, 
+                expand=0.08) +   # encircle
+  labs(subtitle="Area Vs Population", 
+       y="Population", 
+       x="Area", 
+       title="Scatterplot + Encircle", 
+       caption="Source: midwest")
+plot(gg1)
+```
+
+##### Scatterplot with overlapping points
+```{r}
+g <- ggplot(midwest, aes(popwhite, popblack))
+g + geom_point() + 
+  geom_smooth(method="lm", se=F) +
+    labs(subtitle="White  vs Black population", 
+       y="popwhite", 
+       x="popblack", 
+       title="Scatterplot with overlapping points", 
+       caption="Source: midwest")
+```
+
+##### Jittered Points
+```{r}
+data(mpg, package="ggplot2")
+g <- ggplot(mpg, aes(cty, hwy))
+g + geom_jitter(width = .5, size=1) +
+  labs(subtitle="mpg: city vs highway mileage", 
+       y="hwy", 
+       x="cty", 
+       title="Jittered Points")
+```
+
+##### Scatterplot
+```{r}
+# Scatterplot
+theme_set(theme_bw())  # pre-set the bw theme.
+g <- ggplot(mpg, aes(cty, hwy))
+g + geom_count(col="tomato3", show.legend=F) +
+  labs(subtitle="mpg: city vs highway mileage", 
+       y="hwy", 
+       x="cty", 
+       title="Counts Plot")
+```
+
+##### Bubble Plot
+```{r}
+# Bubble Plot
+mpg_select <- mpg[mpg$manufacturer %in% c("audi", "ford", "honda", "hyundai"), ]
+g <- ggplot(mpg_select, aes(displ, cty)) + 
+  labs(subtitle="mpg: Displacement vs City Mileage",
+       title="Bubble chart")
+
+g + geom_jitter(aes(col=manufacturer, size=hwy)) + 
+  geom_smooth(aes(col=manufacturer), method="lm", se=F)
+# Marginal Histogram / Boxplot
+data(mpg)
+qplot(mpg$hwy, geom="histogram") 
+ggplot(data=mpg, aes(mpg$hwy)) + 
+  geom_histogram()
+qplot(mpg$hwy,
+      geom="histogram",
+      binwidth = 5,  
+      main = "Histogram for hwy", 
+      xlab = "Age",  
+      fill=I("blue"), 
+      col=I("red"), 
+      alpha=I(.4),
+      xlim=c(10,50))
+ggplot(data=mpg, aes(mpg$hwy)) + 
+  geom_histogram(breaks=seq(10, 50, by=2), 
+                 col="red", 
+                 aes(fill=..count..)) +
+  scale_fill_gradient("Count", low="green", high="red")+labs(title="Histogram for mpg", x="hwy", y="Count")
+ggplot(data=mpg, aes(mpg$hwy)) + 
+  geom_histogram(aes(y =..density..), 
+                 breaks=seq(10, 50, by = 2), 
+                 col="red", 
+                 fill="green", 
+                 alpha=.2) + 
+  geom_density(col=2)
+```
+
+##### Stacked Bar
+```{r}
+#Stacked Bar
+g <- ggplot(mpg, aes(displ)) + scale_fill_brewer(palette = "Spectral")
+
+g + geom_histogram(aes(fill=class), 
+                   binwidth = .1, 
+                   col="black", 
+                   size=.1) +  # change binwidth
+  labs(title="Histogram with Auto Binning", 
+       subtitle="Engine Displacement across Vehicle Classes")  
+
+g + geom_histogram(aes(fill=class), 
+                   bins=5, 
+                   col="black", 
+                   size=.1) +   # change number of bins
+  labs(title="Histogram with Fixed Bins", 
+       subtitle="Engine Displacement across Vehicle Classes") 
+
+g <- ggplot(mpg, aes(manufacturer))
+g + geom_bar(aes(fill=class), width = 0.5) + 
+  theme(axis.text.x = element_text(angle=65, vjust=0.6)) + 
+  labs(title="Histogram on Categorical Variable", 
+       subtitle="Manufacturer across Vehicle Classes") 
+```
+
+##### Density plot
+```{r}
+# Density plot
+g <- ggplot(mpg, aes(cty))
+g + geom_density(aes(fill=factor(cyl)), alpha=0.8) + 
+  labs(title="Density plot", 
+       subtitle="City Mileage Grouped by Number of cylinders",
+       caption="Source: mpg",
+       x="City Mileage",
+       fill="# Cylinders")
+# Box Plot
+g <- ggplot(mpg, aes(class, cty))
+g + geom_boxplot(varwidth=T, fill="plum") + 
+  labs(title="Box plot", 
+       subtitle="City Mileage grouped by Class of vehicle",
+       caption="Source: mpg",
+       x="Class of Vehicle",
+       y="City Mileage")
+```
+
+##### Correlation
+```{r}
+# correlation plot
+library(ggcorrplot)
+
+# Correlation matrix
+data(mtcars)
+corr <- round(cor(mtcars), 1)
+```
+
+##### Plot
+```{r}
+# Plot
+ggcorrplot(corr)
+ggcorrplot(corr, method = "circle")
+ggcorrplot(corr, hc.order = TRUE, outline.col = "white")
+# Types of correlogram layout
+# --------------------------------
+# Get the lower triangle
+ggcorrplot(corr, hc.order = TRUE, type = "lower",
+           outline.col = "white")
+# Get the upeper triangle
+ggcorrplot(corr, hc.order = TRUE, type = "upper",
+           outline.col = "white")
+# Change colors and theme
+# --------------------------------
+# Argument colors
+ggcorrplot(corr, hc.order = TRUE, type = "lower",
+           outline.col = "white",
+           ggtheme = ggplot2::theme_gray,
+           colors = c("#6D9EC1", "white", "#E46726"))
+
+ggcorrplot(corr, hc.order = TRUE, 
+           type = "lower", 
+           lab = TRUE, 
+           lab_size = 3, 
+           method="circle", 
+           colors = c("tomato2", "white", "springgreen3"), 
+           title="Correlogram of mtcars", 
+           ggtheme=theme_bw)
+```
+
+##### Diverging Barcharts
+```{r}
+#Diverging bars
+data("mtcars")  # load data
+mtcars$`car name` <- rownames(mtcars)  # create new column for car names
+mtcars$mpg_z <- round((mtcars$mpg - mean(mtcars$mpg))/sd(mtcars$mpg), 2)  # compute normalized mpg
+mtcars$mpg_type <- ifelse(mtcars$mpg_z < 0, "below", "above")  # above / below avg flag
+mtcars <- mtcars[order(mtcars$mpg_z), ]  # sort
+mtcars$`car name` <- factor(mtcars$`car name`, levels = mtcars$`car name`)  # convert to factor to retain sorted order in plot.
+
+# Diverging Barcharts
+ggplot(mtcars, aes(x=`car name`, y=mpg_z, label=mpg_z)) + 
+  geom_bar(stat='identity', aes(fill=mpg_type), width=.5)  +
+  scale_fill_manual(name="Mileage", 
+                    labels = c("Above Average", "Below Average"), 
+                    values = c("above"="#00ba38", "below"="#f8766d")) + 
+  labs(subtitle="Normalised mileage from 'mtcars'", 
+       title= "Diverging Bars") + 
+  coord_flip()  
+```
+
+##### Diverging Lollipop Chart
+```{r}
+# Diverging Lollipop Chart
+ggplot(mtcars, aes(x=`car name`, y=mpg_z, label=mpg_z)) + 
+  geom_point(stat='identity', fill="black", size=6)  +
+  geom_segment(aes(y = 0, 
+                   x = `car name`, 
+                   yend = mpg_z, 
+                   xend = `car name`), 
+               color = "black") +
+  geom_text(color="white", size=2) +
+  labs(title="Diverging Lollipop Chart", 
+       subtitle="Normalized mileage from 'mtcars': Lollipop") + 
+  ylim(-2.5, 2.5) +
+  coord_flip()
+```
+
+##### Diverging Dot Plot
+```{r}
+#Diverging Dot Plot
+ggplot(mtcars, aes(x=`car name`, y=mpg_z, label=mpg_z)) + 
+  geom_point(stat='identity', aes(col=mpg_type), size=6)  +
+  scale_color_manual(name="Mileage", 
+                     labels = c("Above Average", "Below Average"), 
+                     values = c("above"="#00ba38", "below"="#f8766d")) + 
+  geom_text(color="white", size=2) +
+  labs(title="Diverging Dot Plot", 
+       subtitle="Normalized mileage from 'mtcars': Dotplot") + 
+  ylim(-2.5, 2.5) +
+  coord_flip()
+
+```
+
+##### Pie chart
+```{r}
+# pie chart
+
+pie <- ggplot(mpg, aes(x = "", fill = factor(class))) + 
+  geom_bar(width = 1) +
+  theme(axis.line = element_blank(), 
+        plot.title = element_text(hjust=0.5)) + 
+  labs(fill="class", 
+       x=NULL, 
+       y=NULL, 
+       title="Pie Chart of class", 
+       caption="Source: mpg")
+
+pie + coord_polar(theta = "y", start=0)
+
+```
+
+##### Violin Plot
+```{r}
+# Violin Plot
+g <- ggplot(mpg, aes(class, cty))
+g + geom_violin() + 
+  labs(title="Violin plot", 
+       subtitle="City Mileage vs Class of vehicle",
+       caption="Source: mpg",
+       x="Class of Vehicle",
+       y="City Mileage")
+```
+
+##### Boxplot
+```{r}
+# Boxplot
+g <- ggplot(mpg, aes(class, cty))
+g + geom_boxplot(varwidth=T, fill="plum") + 
+  labs(title="Box plot", 
+       subtitle="City Mileage grouped by Class of vehicle",
+       caption="Source: mpg",
+       x="Class of Vehicle",
+       y="City Mileage")
+```
+
+##### Boxplot
+```{r}
+# Boxplot
+g <- ggplot(mpg, aes(class, cty))
+g + geom_boxplot(aes(fill=factor(cyl))) + 
+  theme(axis.text.x = element_text(angle=65, vjust=0.6)) + 
+  labs(title="Box plot", 
+       subtitle="City Mileage grouped by Class of vehicle",
+       caption="Source: mpg",
+       x="Class of Vehicle",
+       y="City Mileage")
+```
+
+##### Dot + Box Plot
+```{r}
+#Dot + Box Plot
+g <- ggplot(mpg, aes(manufacturer, cty))
+g + geom_boxplot() + 
+  geom_dotplot(binaxis='y', 
+               stackdir='center', 
+               dotsize = .5, 
+               fill="red") +
+  theme(axis.text.x = element_text(angle=65, vjust=0.6)) + 
+  labs(title="Box plot + Dot plot", 
+       subtitle="City Mileage vs Class: Each dot represents 1 row in source data",
+       caption="Source: mpg",
+       x="Class of Vehicle",
+       y="City Mileage")
+```
+
+##### Treemap
+```{r}
+proglangs <- read.csv("https://raw.githubusercontent.com/selva86/datasets/master/proglanguages.csv")
+library(treemapify)
+
+ggplot(proglangs, aes(area=value, fill=parent, subgroup=parent)) + 
+  geom_treemap()
+ggplot(proglangs, aes(area=value, fill=parent, subgroup=parent)) + 
+  geom_treemap()+
+  #main group bordering
+  geom_treemap_subgroup_border()+
+  #subgroup heading in white
+  geom_treemap_subgroup_text(color="white")+
+  #all other group text in black
+  geom_treemap_text(aes(label=id), color="black")+
+  scale_x_continuous(expand = c(0, 0)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_brewer(palette = "Dark2")
+```
+
+***
