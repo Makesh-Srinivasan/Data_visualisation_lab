@@ -1,0 +1,155 @@
+---
+title: "Lab 3: Statistical visualisation"
+author: "Makesh Srinivasan"
+date: "2/4/2022"
+output: html_document
+---
+
+<h3>Data visualisation</h3><br>
+Registration number: 19BCE1717<br>
+Faculty: Prof. Parvathi R<br>
+Slot: L55 + L56<br>
+Course code: CSE3020 <br>
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+***
+
+## Instructions:
+Consider the Orange dataset, which is automatically included in R. Note that the O is capitalized! Answer the given 7 questions below.
+
+
+## Sections:
+* <a href="#imports">Import libraries and dataset</a>
+* <a href="#questions">Answer the 7 questions</a>
+
+***
+
+<h3 id="imports">Import required package and dataset</h3>
+```{r}
+library(tidyverse)
+library(MASS)
+library(dplyr)
+library(ggplot2)
+
+# dataset:
+data("Orange")
+data <- Orange
+```
+
+***
+
+<h3 id="questions">Answer the 7 questions</h3>
+
+##### 1.Look at Orange using either head or as.tibble() (you’ll have to run library(tidyverse) for that second option). What type of data are each of the columns?
+```{r}
+# head:
+head(data, 5) #Displays the first 5 entries of the dataset
+
+# tribble
+as.tibble(data) #Displays the first 10 entries of the dataset
+
+# What type of data are each of the columns?
+str(data) # More details on each column
+nlevels(data$Tree) # Levels in the Tree attribute
+```
+<br><strong>INFERENCE:</strong> The type of data of each column are detailed below.<br>
+* Tree: Ordinal factor with 5 levels. This means they are ordinal data objects that are used to categorise and store data points in five distinct levels (1 to 5 in the same order).<br>
+* Age: Numerical data type indicating the age of the tree.<br>
+* Circumference: Numerical data type indicating the circumference of the tree.<br><br><br>
+
+***
+
+##### 2.Find the mean, standard deviation, and standard error of tree circumference.
+```{r}
+print(paste("Mean of circumference: ", mean(data$circumference)))
+print(paste("Standard deviation of circumference: ", sd(data$circumference)))
+
+sd_error <- sd(data$circumference)/sqrt(length(data$circumference))
+print(paste("Standard error of circumference: ", sd_error))
+```
+<br><strong>INFERENCE: </strong>Tree circumference:<br>
+* Mean = 115.86 is the average value of this column<br>
+* Standard deviation = 57.49 is the Std. deviation, i.e, measure of the amount of variation or dispersion of a set of values<br>
+* Standard error = 9.72 (Standard error is the statistical term that measures the accuracy with which a sample distribution represents a population by using standard deviation)<br><br><br>
+
+***
+
+##### 3.Make a linear model which describes circumference (the response) as a function of age (the predictor). Save it as an object with <-, then print the object out by typing its name. What do those coefficients mean?
+```{r}
+data_2d <- subset(data, select = -c(Tree))
+model_1 <- lm(circumference~.,data=data_2d)
+model_1
+```
+<br><strong>INFERENCE: </strong>Model 1 represents the linear model in the form y = mx+c where y is the dependent variable (circumference in the case) and x is the independent variable (age in this case). The constants m and c are printed above. <br>
+The m value corresponds to the coefficient of age variable, i.e, slope of this linear function. It indicates that for every unit increase in age, there is a 0.1068 increase in circumference. <br>
+The c or intercept corresponds to the point on the circumference (y-axis) where the line meets. It represents the value of circumference when the age is "0". <br>
+The final model or the function can be summarised as shown:<br>
+<center><strong>circumference = 0.1068 * age + 17.3997</strong></center><br><br>
+
+***
+
+
+##### 4.Make another linear model describing age as a function of circumference. Save this as a different object.
+```{r}
+model_2 <- lm(age~.,data=data_2d)
+model_2
+```
+<br><strong>INFERENCE: </strong>Here, we are reversing the dependent and independent variables used in the previous question. Model 2 represents the linear model in the form y = mx+c where y is the dependent variable (age in the case) and x is the independent variable (circumference in this case). The constants m and c are printed above. <br>
+The m value corresponds to the coefficient of circumference variable, i.e, slope of this linear function. It indicates that for every unit increase in circumference, there is a 7.816 increase in age <br>
+The c or intercept corresponds to the point on the age (y-axis) where the line meets. It represents the value of age when the circumference is "0". <br>
+The final model or the function can be summarised as shown:<br>
+<center><strong>age = 7.816 * circumference + 16.604</strong></center><br><br>
+
+***
+
+##### 5.Call summary() on both of your model objects. What do you notice?
+```{r}
+# Model 1
+summary(model_1)
+anova(model_1)
+```
+<br><strong>INFERENCE: </strong>The R squared value displayed by the summary output is 0.8345 which means, this model (model 1: circumference = 0.1068 * age + 17.3997) is able to describe 83.45% of the data accurately. The adjusted R squared represents the R-squared that has been adjusted for the number of predictors in model_1 and it always lower than R squared value. Here, the value is 0.8295. The age is a significant attribute as indicated by the *** symbol next to the feature. Moreover, the degrees of freedom is 33 and the residual standard error is 23.74 which indicates the standard deviation of the residuals. Ideally, this value must be small as smaller values indicate the difference between the actual and predicted value of y (circumference) is small, i.e, the residual is small. Therefore, the model seems to perform well with minimal residuals with 0.83 R squared value. <br><br>
+
+***
+
+
+```{r}
+# Model 2
+summary(model_2)
+anova(model_2)
+```
+<br><strong>INFERENCE: </strong>
+<br><i>It is important to note that since we are using only 2 variables (one for dependent and one for independent) in question 5, the values of R squared will remain the same. </i><br>
+The R squared value displayed by the summary output is 0.8345 which means, this model (model 2: age = 0.1068 * circumference + 17.3997) is able to describe 83.45% of the data accurately. The adjusted R squared represents the R-squared that has been adjusted for the number of predictors in model_2 and it always lower than R squared value. Here, the value is 0.8295. The age is a significant attribute as indicated by the *** symbol next to the feature. Moreover, the degrees of freedom is 33 and the residual standard error is 203.1 which indicates the standard deviation of the residuals. Ideally, this value must be small as smaller values indicate the difference between the actual and predicted value of y (age) is realtively small (but not smaller than model 1), i.e, the residual is small. Therefore, the model seems to perform well with relatively minimal residuals with 0.83 R squared value. <br><br>
+
+***
+
+##### 6.Does this mean that trees growing makes them get older? Does a tree getting older make it grow larger? Or are these just correlations?
+```{r}
+# cor(data$age, data$circumference) can also be used. They give the same results
+cor.test(data$age, data$circumference, method="pearson")
+```
+<br><strong>INFERENCE:</strong> There is an indication of a strong positive correlation between the attributes age and circumference (0.91). This means, we can observe an increase in age as circumference increases, and viceversa. Thus, to answer this question, <i>trees growing makes them get older</i> and <i>getting older make it grow larger </i>. It is important to note that, we can conclude that there is a positive correlation relation between age and circumference, but cannot conclude a causation relationship from the dataset alone. However, we can logically say that as the trees grow older, they become larger. Hence, there is a causation relation too. <br><br>
+
+***
+
+##### 7.Does the significant p value prove that trees growing makes them get older? Why not?
+```{r}
+# The p value is given above already. But I have printed it here again anyway. NOTE: the p value will be the same for both model 1 and 2 (question 5)
+anova(model_1)
+```
+<br><strong>INFERENCE:</strong>The P-Value determines the probability of results of the statistical hypothesis test. The Null Hypothesis is "No correlation" in a regression fit. If the p-value is less than the significance level (usually 0.05) then the model fits the data well, i.e, reject the null hypothesis. In this case, I got 1.931e-14 which is very small compared to 0.05 significance level. Hence, I can conclude that there is very strong evidence against the null hypothesis in favour of the alternate hypothesis. Thus, there is a linear relationship between age and circumference. The same conclusion of Question 7 is shown on a graph below There is in fact an approximate linear relationship between age and circumference.<br>
+<strong>Does the significant p value prove that trees growing makes them get older?</strong> No. A significant (higher) p value means that we FAIL to reject Null hypothesis, i.e, there is no relation between age and circumference. A lower p-value means that trees growing makes them get older. 
+
+```{r}
+# Not required. But used to support the conclusion in question 7
+ggplot(data, aes(age, circumference)) + geom_point() + geom_smooth(method="lm", se=F) + labs(subtitle="Age vs circumference", y="Age", x="Circumference", title="Linear fit of Orange data", caption="Source: Orange data")
+```
+
+***
+
+
+
