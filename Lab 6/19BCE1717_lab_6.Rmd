@@ -1,0 +1,207 @@
+---
+title: 'Lab 6: igraphs'
+author: "Makesh Srinivasan"
+date: "10/6/2022"
+output:
+pdf_document: default
+html_document: default
+---
+
+Registration number: 19BCE1717<br>
+Faculty: Prof. Parvathi R<br>
+Slot: L55 + L56<br>
+Course code: CSE3020 <br>
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## igraph Lab exercise
+
+##### Do the following questions
+
+***
+
+##### Prerequisites
+Do the following before proceeding to the questions
+```{r}
+# install.packages("igraph")
+library(igraph) # load the library
+```
+
+
+##### Solutions
+
+1.	Read the given adjacency matrix into R (adjacency.csv )
+```{r}
+nodes <- read.csv("Dataset2-Media-User-Example-NODES.csv") #nodes
+head(nodes) 
+```
+
+***
+
+2.	Read the given edge matrix into R(edges.csv)
+```{r}
+edges <- read.csv("Dataset2-Media-User-Example-EDGES.csv") #links
+edges <- subset(edges, select = -c(X))
+head(edges)
+```
+
+***
+
+3.	Create and plot the graph from the adjacency matrix and edge matrix (customize the vertex color edge size, vertex frame and label)
+```{r}
+# The plots contain all the customisations too. But to see them individually, see the following chunk of code
+net2 <- graph_from_incidence_matrix(edges)
+table(V(net2)$type)
+net2.bp <- bipartite.projection(net2)
+as_incidence_matrix(net2)  %*% t(as_incidence_matrix(net2)) 
+t(as_incidence_matrix(net2)) %*%   as_incidence_matrix(net2)
+plot(net2.bp$proj1, vertex.label.color="black", vertex.label.dist=1,vertex.size=7, vertex.label=nodes$media[!is.na(nodes$media.type)])
+plot(net2.bp$proj2, vertex.label.color="black", vertex.label.dist=1,vertex.size=7, vertex.label=nodes$media[ is.na(nodes$media.type)])
+```
+
+```{r}
+# Individual customisations
+#####edge
+#colour
+plot(net2.bp$proj2, edge.color="red")
+#size
+plot(net2.bp$proj2, edge.arrow.size=10)
+
+#####vertex
+#colour
+plot(net2.bp$proj2, vertex.color="green")
+#size
+plot(net2.bp$proj2, vertex.size = 10)
+
+#vector frame
+plot(net2.bp$proj2, frame =TRUE, vertex.frame.color = "orange")
+#label
+plot(net2.bp$proj1, vertex.label.color="black", vertex.label.dist=1,vertex.size=7, vertex.label=nodes$media[!is.na(nodes$media.type)])
+
+```
+
+***
+
+4.	Display the edges & vertices, the network as matrix and the names of vertices
+
+```{r}
+##### This can be printed as a matrix as shown below:
+E(net2)
+V(net2)
+edges
+
+##### This can also be printed as a heatmap as shown below (I used weights from a different dataset)
+n <- read.csv("Dataset1-Media-Example-NODES.csv", header=T, as.is=T)
+l <- read.csv("Dataset1-Media-Example-EDGES.csv", header=T, as.is=T)
+l <- aggregate(l[,3], l[,-3], sum)
+l <- l[order(l$from, l$to),]
+colnames(l)[4] <- "weight"
+rownames(l) <- NULL
+net <- graph_from_data_frame(d=l, vertices=n, directed=T) 
+class(net)
+graph <- net
+net <- simplify(net, remove.multiple = F, remove.loops = T)
+as_edgelist(net, names=T)
+as_adjacency_matrix(net, attr="weight")
+netm <- get.adjacency(net, attr="weight", sparse=F)
+colnames(netm) <- V(net)$media
+rownames(netm) <- V(net)$media
+palf <- colorRampPalette(c("gold", "dark orange")) 
+heatmap(netm[,17:1], Rowv = NA, Colv = NA, col = palf(100), scale="none", margins=c(10,10) )
+```
+
+***
+
+5.	Find the count of vertices and edges of the created graph
+```{r}
+x <- gsize(net2)
+y <- gorder(net2)
+print(paste("count of edges = ", x))
+print(paste("count of vertices = ", y))
+```
+
+***
+
+6.	Display the adjacency vertices of each vertex(individual) in the created graph
+```{r}
+adjacent_vertices(graph, V(graph), mode = "out")
+adjacent_vertices(graph, V(graph), mode = "in")
+adjacent_vertices(graph, V(graph), mode = "all")
+adjacent_vertices(graph, V(graph), mode = "total")
+```
+
+***
+
+7.	Find the min and max degree of the created graph
+```{r}
+# The degree for the paths:
+degree(graph, v = V(graph), mode = c("all", "out", "in", "total"))
+
+# Maximum degree
+V(graph)$name[degree(graph)==max(degree(graph))]
+
+#Minimum degree
+V(graph)$name[degree(graph)==min(degree(graph))]
+```
+
+***
+
+8.	Create & set vertex attribute property named profit and values("+", "-", "+", "-", "+", "-", "+", "-", "+")
+```{r}
+graph <- set_vertex_attr(graph,"profit",value = c("+", "-", "+", "-", "+", "-", "+", "-", "+"))
+plot(graph, vertex.label.dist=1,vertex.size=7, vertex.label = c("+", "-", "+", "-", "+", "-", "+", "-", "+"))
+vertex_attr(graph)
+```
+
+***
+
+9.	Create & set vertex attribute property named type and values(either leap or non-leap year)
+```{r}
+graph <- set_vertex_attr(graph,"type",value = c(2000:2029))
+plot(graph, vertex.label.dist=1,vertex.size=7, vertex.label = c(2000:2029))
+vertex_attr(graph)
+```
+
+***
+
+10.	Create & set edge attribute named weight and values (if edge exits in between leap year vertices then 5 else 1 )
+```{r}
+# The 5 are in places of nodes where the edge connects 2 leap years. Else 1
+graph <- set_edge_attr(graph,"weight",index = E(graph) ,value = c("5","1","1","1","5","1","1","1","5","1","1","1","5","1","1","1","5","1","1","1","5","1","1","1","5","1","1","5","1","1","1"))
+plot(graph)
+get.edge.attribute(graph)
+```
+
+***
+
+11.	Convert the created un-directed graph into directed graph based on the following rule
+
+a. edge directed towards high value vertex
+```{r}
+as.directed(graph, mode = c("arbitrary"))
+plot(graph)
+```
+
+b. if any one of the vertex is leap year then put the reverse edge with same weight.
+```{r}
+as.directed(graph, mode = c("mutual"))
+plot(graph)
+```
+
+***
+
+12. Display the adjacency matrix of the resultant directed graph.
+```{r}
+print(get.adjacency(graph))
+```
+
+***
+
+13. Display the in-degree and out-degree of each vertex of resultant directed graph
+```{r}
+print(degree(graph,mode="in")) 
+print(degree(graph,mode="out"))
+```

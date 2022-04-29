@@ -1,0 +1,94 @@
+---
+title: "`Week-6-DV 19BCE1759`"
+author: "S Sabahri Girish"
+output:
+  word_document: default
+  html_notebook: default
+---
+
+## Q1
+```{r}
+library(igraph)
+nodes <- read.csv("Dataset2-Media-User-Example-NODES.csv",header= T ,as.is = T)
+rown<-nodes[1:10,]
+coln<-nodes[11:30,]
+nodes
+```
+
+## Q2
+```{r}
+edges <- read.csv("Dataset2-Media-User-Example-EDGES.csv", header = T , row.names = 1)
+edges
+```
+
+## Q3
+```{r}
+colnames(edges)<-coln[["media"]]
+rownames(edges)<-rown[["media"]]
+adj<-data.matrix(edges)
+graph<-graph_from_incidence_matrix(adj)
+plot(graph)
+```
+## Q4
+```{r}
+E(graph)
+V(graph)
+links
+```
+
+## Q5
+```{r}
+gsize(graph)
+gorder(graph)
+```
+
+## Q6
+```{r}
+adjacent_vertices(graph, V(graph), mode = "out")
+adjacent_vertices(graph, V(graph), mode = "in")
+adjacent_vertices(graph, V(graph), mode = "all")
+adjacent_vertices(graph, V(graph), mode = "total")
+```
+
+## Q7
+```{r}
+degree(graph,
+  v = V(graph),
+  mode = c("all", "out", "in", "total"))
+```
+
+## Q8
+```{r}
+graph <- set_vertex_attr(graph,"profit",value = c("+", "-", "+", "-", "+", "-", "+", "-", "+"))
+plot(graph)
+vertex_attr(graph)
+```
+
+## Q9
+```{r}
+graph <- set_vertex_attr(graph,"type",value = c(2000:2030))
+plot(graph)
+vertex_attr(graph)
+```
+
+## Q10
+```{r}
+graph <- set_edge_attr(graph,"weight",index = E(graph) ,value = c("5", "1","1","1","5","1","1","1","5","1","1","1","5","1","1","1","5","1","1","1","5","1","1","1","5","1","1","1","5","1","1"))
+plot(graph)
+get.edge.attribute(graph)
+```
+
+## Q11
+```{r}
+plot(graph,edge.color = E(graph)$weight,vertex.size=20,edge.width=E(g)$weight,vertex.color="#c8ff00")
+```
+
+## Q12
+```{r}
+print(get.adjacency(graph))
+```
+## Q13
+```{r}
+print(degree(graph,mode="in")) 
+print(degree(graph,mode="out"))
+```

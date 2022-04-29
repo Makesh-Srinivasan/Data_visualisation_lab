@@ -1,0 +1,250 @@
+---
+title: 'Lab 4: Principal Component Analysis (PCA) and Linear Discriminant Analysis
+  (LDA)'
+author: "Makesh Srinivasan"
+date: "3/6/2022"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+Registration number: 19BCE1717<br>
+Faculty: Prof. Parvathi R<br>
+Slot: L55 + L56<br>
+Course code: CSE3020 <br>
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## PCA LDA Lab exercise
+
+##### Question
+* Part 1: 
+Use Breast Cancer Wisconsin data set from the UCI Machine learning repo to plot the PCA analysis. Use the ‘prcomp’ function runs PCA on the data.<br>
+  - You want to explain difference between malignant and benign tumors using Visualisation and add the response variable (diagnosis) to the plot<br>
+  - Construct some kind of model using the first 6 principal components to predict whether a tumor is benign or malignant and then compare it to a model using the original 30 variables.<br>
+
+* Part 2: Use the built-in iris dataset in R to plot the LDA analysis. Use the lda function of the MASS package in R
+Project the LDA visual output and Compare the LDA and PCA 2D Projection of Iris dataset
+
+***
+
+## Sections:
+* <a href="#part1">Part 1: PCA & LDA using Breast Cancer Wisconsin data set from the UCI Machine learning repo</a>
+  - <a href="#part11">Visualisation of benign and malignant</a>
+  - <a href="#part12">Model to classify benign and malignant</a>
+* <a href="#part2">Part 2: IRIS dataset</a>
+
+***
+
+<center><h4 id="part1">PART 1</h4></center>
+PCA & LDA using Breast Cancer Wisconsin data set from the UCI Machine learning repo <br>
+
+Load necessary libraries:
+```{r}
+library(dplyr)
+library(MASS)
+library(ROCR)
+library(devtools)
+# NOTE: I have imported other libraries as and when needed, theses are the ones I needed prior to performing the tasks
+```
+
+Load the dataset:
+```{r}
+data <- read.csv("lab5data.csv")
+head(data)
+```
+
+Run prcomp function and summarise the data:
+```{r}
+# Center and scale the data as well
+data.pr <- prcomp(data[c(3:32)], center = TRUE, scale = TRUE)
+summary(data.pr)
+```
+
+<br> The data is now standardised
+
+```{r}
+screeplot(data.pr, type = "l", npcs = 15, main = "First 10 PCs Screeplot")
+abline(h = 1, col="red", lty=5)
+legend("topright", legend=c("Eigenvalue = 1"), col=c("red"), lty=5, cex=0.6)
+cumpro <- cumsum(data.pr$sdev^2 / sum(data.pr$sdev^2))
+plot(cumpro[0:15], xlab = "Number PC", ylab = "Amount of explained variance", main = "Cumulative variance plot")
+abline(v = 6, col="blue", lty=5)
+abline(h = 0.88759, col="blue", lty=5)
+legend("topleft", legend=c("Cut-off @ PC6"), col=c("blue"), lty=5, cex=0.6)
+```
+
+<br><strong>INFERENCE:</strong> the first 6 components has an Eigenvalue > 1 and explains almost 90% of variance <br>
+Hence, we can reduce the dimension from 30 to 6
+
+
+```{r}
+plot(data.pr$x[,1],data.pr$x[,2], xlab="PC1 (44.3%)", ylab = "PC2 (19%)", main = "PC1 / PC2 - plot")
+```
+<br><strong>INFERENCE:</strong> Here, we observe the first two components that explain 60% of the total variance<br>
+
+```{r}
+# visualisation library
+library("factoextra")
+```
+<br>
+<center><h4 id="part11">Visualisation of benign and malignant</h4></center>
+<br>
+
+##### (i) You want to explain difference between malignant and benign tumors using Visualisation and add the response variable (diagnosis) to the plot
+
+```{r}
+fviz_pca_ind(data.pr, geom.ind = "point", pointshape = 21, pointsize = 2, fill.ind = data$diagnosis, col.ind = "black", palette = "jco", addEllipses = TRUE, label = "var", col.var = "black", repel = TRUE, legend.title = "Diagnosis") + 
+  ggtitle("2D PCA-plot from 30 feature dataset") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+<br><strong>INFERENCE:</strong> The same when plotted with the response variable (diagnosis) we see a clear difference between the benign and malignant tumours. Thus, we can run classification algorithms on this.<br>
+We have visualised and explained the difference between the benign (blue B) and malignant (yellow M) on the plot above along with the response variable diagnosis. <br> Now, we can move to part 2.<br>
+
+
+Check for missing values:
+```{r}
+data %>%
+  summarise_all(funs(sum(is.na(.))))
+```
+<br>
+<center><h4 id="part12">Model to classify benign and malignant</h4></center>
+<br>
+
+##### (ii) Construct some kind of model using the first 6 principal components to predict whether a tumor is benign or malignant and then compare it to a model using the original 30 variables.
+
+```{r}
+# Conver the dataset into matix
+data.data <- as.matrix(data[,c(3:32)])
+row.names(data.data) <- data$id
+data_raw <- cbind(data.data, as.numeric(as.factor(data$diagnosis))-1)
+colnames(data_raw)[31] <- "diagnosis"
+
+# 75/25 split of our data using the sample() 
+s_size_raw <- floor(0.75 * nrow(data_raw))
+t_raw <- sample(nrow(data_raw), size = s_size_raw)
+train_raw.data <- as.data.frame(data_raw[t_raw, ])
+test_raw.data <- as.data.frame(data_raw[-t_raw, ])
+f <- paste(names(train_raw.data)[31], "~", paste(names(train_raw.data)[-31], collapse=" + ")) 
+data_raw.lda <- lda(as.formula(paste(f)), data = train_raw.data)
+
+# Predictions
+data_raw.lda.predict <- predict(data_raw.lda, newdata = test_raw.data)
+data_raw.lda.predict$class
+```
+
+
+```{r}
+data_raw.lda.predict$posterior
+data_raw.lda.predict.posteriors <-as.data.frame(data_raw.lda.predict$posterior)
+data_raw.lda.predict.posteriors
+```
+
+Evaluation of the model
+```{r}
+pred <- prediction(data_raw.lda.predict.posteriors[,2], test_raw.data$diagnosis)
+roc.perf = performance(pred, measure = "tpr", x.measure = "fpr")
+auc.train <- performance(pred, measure = "auc")
+auc.train <- auc.train@y.values
+plot(roc.perf)
+abline(a=0, b= 1)
+text(x = .25, y = .65 ,paste("AUC = ", round(auc.train[[1]],3), sep = ""))
+```
+
+```{r}
+data.pcst <- data.pr$x[,1:6]
+data.pcst <- cbind(data.pcst, as.numeric(as.factor(data$diagnosis))-1)
+colnames(data.pcst)[7] <- "diagnosis"
+colnames(data.pcst)
+```
+
+```{r}
+smp_size <- floor(0.75 * nrow(data.pcst))
+train_ind <- sample(nrow(data.pcst), size = smp_size)
+train_raw2.data <- as.data.frame(data.pcst[train_ind, ])
+test_raw2.data <- as.data.frame(data.pcst[-train_ind, ])
+data.lda <- lda(diagnosis ~ PC1 + PC2 + PC3 + PC4 + PC5 + PC6, data = train_raw2.data)
+data.lda.predict <- predict(data.lda, newdata = test_raw2.data)
+f2 <- paste(names(train_raw2.data)[7], "~", paste(names(train_raw2.data)[-7], collapse=" + "))
+data_raw.lda2 <- lda(as.formula(paste(f2)), data = train_raw2.data)
+data_raw.lda.predict2 <- predict(data_raw.lda2, newdata = test_raw2.data)
+data_raw.lda.predict.posteriors2 <- as.data.frame(data_raw.lda.predict2$posterior)
+pred2 <- prediction(data_raw.lda.predict.posteriors2[,2], test_raw2.data$diagnosis)
+roc.perf2 = performance(pred2, measure = "tpr", x.measure = "fpr")
+auc.train2 <- performance(pred2, measure = "auc")
+auc.train2 <- auc.train2@y.values
+# Plot
+plot(roc.perf2)
+abline(a=0, b= 1)
+text(x = .25, y = .65 ,paste("AUC = ", round(auc.train2[[1]],3), sep = ""))
+```
+
+```{r}
+data.pcst <- data.pr$x[,1:6]
+data.pcst <- cbind(data.pcst, as.numeric(as.factor(data$diagnosis))-1)
+colnames(data.pcst)[7] <- "diagnosis"
+smp_size <- floor(0.75 * nrow(data.pcst))
+train_ind <- sample(nrow(data.pcst), size = smp_size)
+train.data <- as.data.frame(data.pcst[train_ind, ])
+test.data <- as.data.frame(data.pcst[-train_ind, ])
+data.lda <- lda(diagnosis ~ PC1 + PC2 + PC3 + PC4 + PC5 + PC6, data = train.data)
+data.lda.predict <- predict(data.lda, newdata = test.data)
+```
+
+## Conclusion
+We notice that the Principal Component model clearly does <strong>better</strong> than the model with original 30 variables. 
+
+***
+
+<br>
+<br>
+<center><h4 id="part2">PART 2</h4></center>
+<br>
+
+Use the built-in iris dataset in R to plot the LDA analysis. Use the lda function of the MASS package in R<br>
+Project the LDA visual output and Compare the LDA and PCA 2D Projection of Iris dataset
+
+
+```{r}
+data(iris)
+head(iris)
+```
+
+```{r}
+require(MASS) 
+require(ggplot2) 
+require(scales)
+```
+
+```{r}
+ pca <- prcomp(iris[,-5],
+              center = TRUE,
+              scale. = TRUE)
+prop.pca = pca$sdev^2/sum(pca$sdev^2)
+lda <- lda(Species ~ .,
+           iris,
+           prior = c(1,1,1)/3)
+r <- lda(formula = Species ~ .,
+         data = iris,
+         prior = c(1,1,1)/3)
+prop.lda = r$svd^2/sum(r$svd^2)
+plda <- predict(object = lda,
+                newdata = iris)
+dataset = data.frame(species = iris[,"Species"],
+                     pca = pca$x, lda = plda$x)
+```
+
+Plotting LDA:
+```{r}
+ggplot(dataset) + geom_point(aes(lda.LD1, lda.LD2, colour = species,), size = 2.5) + labs(x = paste("LD1 (", percent(prop.lda[1]), ")", sep=""), y = paste("LD2 (", percent(prop.lda[2]), ")", sep=""))
+```
+
+Plotting PCA
+```{r}
+ggplot(dataset) + geom_point(aes(pca.PC1, pca.PC2, colour = species), size = 2.5) + labs(x = paste("PC1 (", percent(prop.pca[1]), ")", sep=""), y = paste("PC2 (", percent(prop.pca[2]), ")", sep=""))
+```
+
+***

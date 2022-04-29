@@ -1,0 +1,268 @@
+---
+title: 'Lab 7: K means and Decision trees'
+author: "Makesh Srinivasan"
+date: "3/31/2022"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+Registration number: 19BCE1717<br>
+Faculty: Prof. Parvathi R<br>
+Slot: L55 + L56<br>
+Course code: CSE3020 <br>
+
+
+***
+
+## K-means clustering and Decision trees
+
+***
+
+## Sections:
+* <a href="#part1">Part 1: (Unsupervised) K-means clustering</a>
+* <a href="#part2">Part 2: (Supervised) Decision trees</a>
+
+***
+
+<center><h4 id="part1">K-means clustering and visualisation</h4></center>
+
+<strong>Instructions: </strong>Other than IRIS dataset, use a dataset to perform clustering and visualise the same
+<br>
+I have used CRABS datase from the MASS package.
+
+<br>
+
+##### 1. Load the crabs dataset and view the data.
+```{r}
+rm(list=ls())
+library(MASS)
+data("crabs") # load crabs Dataset
+str(crabs) #view structure of dataset
+```
+
+##### 2. Display the Statistical Summary of the dataset
+
+```{r}
+#2. Display the Statistical Summary of the dataset
+summary(crabs) #view statistical summary of dataset
+head(crabs) #view top  rows of dataset
+```
+
+##### 3. Apply the preprocessing to remove the class attribute (sp)
+```{r}
+crabs.new <- crabs[,c(3,4,5,6,7,8)]
+crabs.class <- crabs[,"sp"]
+head(crabs.new)
+head(crabs.class)
+```
+#4. Normalisation 
+```{r}
+# Create a function to normalize the data before clustering
+normalize <- function(x){
+  return ((x-min(x))/(max(x)-min(x)))
+}
+
+crabs.new$FL<- normalize(crabs.new$FL)
+crabs.new$RW<- normalize(crabs.new$RW)
+crabs.new$CL<- normalize(crabs.new$CL)
+crabs.new$CW<- normalize(crabs.new$CW)
+crabs.new$BD<- normalize(crabs.new$BD)
+crabs.new$index<- normalize(crabs.new$index)
+head(crabs.new)
+```
+
+##### 5. Apply k-means clustering algorithm with k = 2
+
+```{r}
+result<- kmeans(crabs.new,2) #aplly k-means algorithm with no. of centroids(k)=2
+```
+
+##### 6. Find the number of records in each cluster
+
+```{r}
+result$size # gives no. of records in each cluster
+```
+
+##### 7. Display the cluster center data point values 
+
+
+```{r}
+result$centers # gives value of cluster center datapoint value(2 centers for k=2)
+```
+
+##### 8. Display the cluster vector showing the cluster where each record falls
+
+```{r}
+result$cluster #gives cluster vector showing the cluster where each record falls
+# Verify results of clustering
+par(mfrow=c(2,2), mar=c(5,4,2,2))
+```
+
+#9. Plot to see how FL and RW data points have been distributed in clusters
+
+```{r}
+
+plot(crabs.new[c(2,3)], col=result$cluster)
+```
+
+##### 10. Plot to see how FL and RW data points have been distributed originally as per "class" attribute in dataset
+```{r}
+
+plot(crabs.new[c(2,3)], col=crabs.class)
+
+```
+
+##### 11.Plot to see how CL and CW data points have been distributed in clusters
+
+```{r}
+
+plot(crabs.new[c(4,5)], col=result$cluster)
+```
+
+##### 12.Plot to see how CL and CW data points have been distributed originally as per "class" attribute in dataset
+
+```{r}
+plot(crabs.new[c(4,5)], col=crabs.class)
+result$cluster <- as.factor(result$cluster)
+```
+
+```{r}
+library(ggplot2)
+```
+##### 14. Plot the clusterresults using ggplot
+```{r}
+ggplot(crabs.new, aes(FL, RW, color = result$cluster)) + geom_point()
+plot(crabs.new[c("FL", "RW")], col=result$cluster)
+```
+
+##### 15. Display the clustering results with all parameters 
+
+```{r}
+plot(crabs.new[,], col=result$cluster)
+```
+
+##### 16. Display the results in table
+```{r}
+table(result$cluster,crabs.class) # Result of table shows that Cluster 1 corresponds to B, and Cluster 2 corresponds to O 
+```
+
+##### 17. Display the K Means Algorithm with Animation and visualize the changes in the cluster center
+
+```{r}
+library(animation)
+km1<-kmeans.ani(crabs.new,2)
+```
+
+##### 18. Import factoextra package and visualize the cluster result
+```{r}
+library(factoextra) # clustering algorithms & visualization
+fviz_cluster(result, data = crabs.new)
+```
+
+##### 19. Explore the cluster analysis result with various value of k like 3,4,5
+
+```{r}
+k2 <- kmeans(crabs.new, centers = 2, nstart = 25)
+k3 <- kmeans(crabs.new, centers = 3, nstart = 25)
+k4 <- kmeans(crabs.new, centers = 4, nstart = 25)
+k5 <- kmeans(crabs.new, centers = 5, nstart = 25)
+```
+
+##### plots to compare
+
+```{r}
+p1 <- fviz_cluster(k2, geom = "point", data = crabs.new) + ggtitle("k = 2")
+p2 <- fviz_cluster(k3, geom = "point",  data = crabs.new) + ggtitle("k = 3")
+p3 <- fviz_cluster(k4, geom = "point",  data = crabs.new) + ggtitle("k = 4")
+p4 <- fviz_cluster(k5, geom = "point",  data = crabs.new) + ggtitle("k = 5")
+library(gridExtra)
+grid.arrange(p1, p2, p3, p4, nrow = 2)
+```
+
+
+***
+
+<center><h4 id="part2">Decision trees</h4></center>
+
+<strong>Instructions: </strong>Train a decision tree model and visualise the tree
+
+##### Load the dataset
+
+```{r}
+data <- crabs
+shuffle_index <- sample(1:nrow(data))
+data <- data[shuffle_index, ]
+head(data)
+```
+
+##### Train and test split
+
+```{r}
+create_train_test <- function(d, size = 0.8, train = TRUE) {
+    n_row = nrow(d)
+    total_row = size * n_row
+    train_sample <- 1: total_row
+    if (train == TRUE) {
+        return (d[train_sample, ])
+    } else {
+        return (d[-train_sample, ])
+    }
+}
+```
+
+##### 80:20 ratio for the dataset
+
+```{r}
+# Dataset is split into train and test
+data_train <- create_train_test(data, 0.8, train = TRUE)
+data_test <- create_train_test(data, 0.8, train = FALSE)
+dim(data_train)
+```
+
+##### Dimension of the test data
+
+```{r}
+dim(data_test)
+```
+<br> 8 columns and 40 rows
+
+##### proportion of the train and test data with respect to species (label):
+
+```{r}
+prop.table(table(data_train$sp))
+prop.table(table(data_test$sp))
+```
+<br>We can see that the distribution of B and O classes are almost similar. Hence we can proceed without having to do Sampling of the dataset.
+
+##### Visualise the model
+```{r}
+library(rpart)
+library(rpart.plot)
+fit <- rpart(sp~., data = data_train, method = 'class')
+rpart.plot(fit, extra = 106)
+```
+<br>The Decition tree is shown above. The model was generated and the output is as follows.
+
+##### Confusion matrix of the predictions
+```{r}
+predict_unseen <-predict(fit, data_test, type = 'class')
+table_mat <- table(data_test$sp, predict_unseen)
+table_mat
+```
+<br>We see that the first and last cells show the right predictions (True positives and negatives)
+
+##### Accuracy (performance measure)
+```{r}
+accuracy_Test <- sum(diag(table_mat)) / sum(table_mat)
+print(paste('Accuracy for test', accuracy_Test))
+```
+Thus, our model is able to describe most of the dataset accurately.
+
+***
+

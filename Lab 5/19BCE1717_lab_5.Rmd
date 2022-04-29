@@ -1,0 +1,302 @@
+---
+title: 'Lab 5: Time series'
+author: "Makesh Srinivasan"
+date: "3/6/2022"
+output:
+pdf_document: default
+html_document: default
+---
+
+Registration number: 19BCE1717<br>
+Faculty: Prof. Parvathi R<br>
+Slot: L55 + L56<br>
+Course code: CSE3020 <br>
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Time series Lab exercise
+
+##### Question
+
+Consider the COVID-19 pandemic situation. Analysis and forecast the pandemic trend by using Covid19 dataset
+
+1. You want to predict the last year monthly, weekly trend based on the RTPCR response, (i.e.) No. of +Ve cases and No. –Ve cases along with admitted and discharged trend.
+2. Identify the death rate due to Covid-19
+3. Compare the last year and this year trends with respect to 1st , 2nd and 3rd wave also forecast the 4th Wave impact in India
+4. Construct the model using the Simple moving average, Exponential Moving Average and ARIMA to forecast the Covid19 Dataset.
+5. Show the all above implementation with the visual impact
+
+***
+
+<center><h4 id="part1">Solution</h4></center>
+
+Load necessary libraries:
+```{r}
+library(dplyr)
+library(MASS)
+library(ROCR)
+library(tidyr)
+library(devtools)
+library(forecast)
+library(TTR)
+```
+<br>
+Load the dataset:
+```{r}
+data <- read.csv("COVIDdata.csv")
+head(data)
+```
+<br>
+```{r}
+dim(data)
+```
+<br>There are over 1.6L records in this dataset. Plotting graphs will be extremely computationally intensive, thus, I have chosen to select a subset of the data to work with. For some parts I have used Indian data while for some other cases, I used UK. The reason for using two subset of data is to show trend in India and compare with other countries on the planet, and also for some attributes Indian subset of data does not have any records; however, UK does. TO show variety I have adopted this method.
+<br>
+Subsetting to Indian region:
+```{r}
+data <- data[data$location == "India",]
+data$date <- as.Date(data$date, format = "%Y-%m-%d")
+head(data)
+```
+
+
+```{r}
+data$newNegativeCases <- data$new_tests - data$new_cases 
+library("ggplot2")
+```
+
+<br>Now we will see plots for question 1 and 2 mentioned above. The following are plots exploring the positive cases, negative cases, hospitalisation, death rates, positive rates, etc with respect to time
+
+<br>The positive cases in India over time:
+```{r}
+#data %>% drop_na(new_cases)
+data <- data[complete.cases(data$new_cases),]
+ggplot(data = data, aes(x = date, y = new_cases)) +geom_point() + labs(x = "Date", y = "trend", title = "New positive Cases",)
+```
+
+<br>New negative cases over time in India
+```{r}
+ggplot(data = data, aes(x = date, y = newNegativeCases)) +geom_point() +  labs(x = "Date", y = "new negative cases",title = "New negative Cases",)
+```
+
+<br>Linear model:
+```{r}
+model <- lm(data$new_cases~data$new_deaths+data$new_tests+data$positive_rate)
+summary(model)
+```
+
+<br>Death rate due to COVID over time:
+```{r}
+data$deathrate <- data$new_deaths/data$new_cases
+library("ggplot2")
+ggplot(data = data, aes(x = date, y = deathrate)) + geom_point() + labs(x = "Date",y = "Death Rate", title = "Death Rate due to covid",)
+```
+
+<br>Total number of cases in India over time:
+```{r}
+newcase_ts <- ts(data$new_cases)
+ggplot(data = data, aes(x = date, y = total_cases)) + geom_point() + labs(x = "Date", y = "number of cases", title = "Total number of cases wrt time")
+```
+
+<br>Total number of negative cases in India over time:
+```{r}
+ggplot(data = data, aes(x = date, y = newNegativeCases )) + geom_point() + labs(x = "Date", y = "Negative cases", title = "Total number of negative cases wrt time")
+```
+<br>
+```{r}
+new_cases_forecasts <- HoltWinters(newcase_ts, beta = FALSE, gamma = FALSE)
+plot(new_cases_forecasts)
+```
+
+<br>Now we shall see the scenario in the UK
+<br>Load the UK subset
+```{r}
+df <- read.csv("COVIDdata.csv")
+```
+
+```{r}
+data <- df[df$location == "United Kingdom",]
+data$date <- as.Date(data$date, format = "%Y-%m-%d")
+```
+
+<br>New cases in UK over time
+```{r}
+ggplot(data = data, aes(x = date, y = new_cases)) + geom_point() + labs(x = "Date", y = "new cases", title = "New cases wrt time") + geom_smooth(se=F)
+```
+
+
+<br>Number of deaths over time: (cumulative)
+```{r}
+ggplot(data = data, aes(x = date, y = total_deaths)) + geom_point() + labs(x = "Date", y = "Total deaths", title = "Total number of deaths wrt time") + geom_smooth(se=F)
+```
+
+
+<br>Rate of postivity over time in the UK
+```{r}
+ggplot(data = data, aes(x = date, y = positive_rate)) + geom_point() + labs(x = "Date", y = "rate of positive", title = "Positive rates wrt time") + geom_smooth(se=F)
+```
+
+
+<br>Now that the visualisation for the first 2 questions are one, we shall see the next question - comparison between waves.<br><br>
+
+Here, I have assumed that the first wave is 2020, second is 2021 and third is 2022. This may not be the case in reality as the time period for each wave is much shorter. But I chose this to see the trend in the entire year. Also, it is very difficult to identify the start and end date of a wave. Many economists are not able to agree on common dates, thus, I chose to do based on the year. However, the code is same if we change the time period of the waves too.<br>
+<br>
+
+Positive rates comparison between the thre waves of COVID-19 in the UK
+```{r}
+first <- data
+first <- first[first$date >= "2020-01-25" & first$date <= "2020-12-28", ]
+
+second <- data
+second <- second[second$date >= "2021-01-01" & second$date <= "2021-12-31", ]
+
+third <- data
+third <- third[third$date >= "2022-01-25" & third$date <= "2022-12-28", ]
+
+ggplot(data = first, aes(x = date, y = new_cases)) + geom_point() + labs(x = "Date", y = "new cases", title = "number of new cases wrt time") + geom_smooth(se=F)
+
+ggplot(data = second, aes(x = date, y = new_cases)) + geom_point() + labs(x = "Date", y = "new cases", title = "number of new cases wrt time") + geom_smooth(se=F)
+
+ggplot(data = third, aes(x = date, y = new_cases)) + geom_point() + labs(x = "Date", y = "new cases", title = "number of new cases wrt time") + geom_smooth(se=F)
+```
+<br>
+We see that the number of new cases rose towards the end of 2020. Then in the second wave (2021) it began to decrease, but again rose towards the end of the year. Finally in the year 2022, it seems to be decreasing so far<br>
+
+<br>
+Positive rates comparison between the thre waves of COVID-19 in the UK
+```{r}
+ggplot(data = first, aes(x = date, y = positive_rate)) + geom_point() + labs(x = "Date", y = "positive rates", title = "Positive rates wrt time") + geom_smooth(se=F)
+
+ggplot(data = second, aes(x = date, y = positive_rate)) + geom_point() + labs(x = "Date", y = "Cumulative cases", title = "Positive rates wrt time") + geom_smooth(se=F)
+
+ggplot(data = third, aes(x = date, y = positive_rate)) + geom_point() + labs(x = "Date", y = "Cumulative cases", title = "Positive rates wrt time") + geom_smooth(se=F)
+```
+<br>We notice that the positive rate was very high in 2020 May. THen it decreased over time and then again it began to rise and in the year 2021, it was very high and ths again went on to reduce. By mid 2021, this began rising once again and in the year 2022, it is decreasing so far. This is because when the number of cases (previous graphs) rose the positivty also rose. It decreased when the other decreased. <br>
+
+<br>New deaths comparison between the thre waves of COVID-19 in the UK
+```{r}
+ggplot(data = first, aes(x = date, y = new_deaths)) + geom_point() + labs(x = "Date", y = "deaths", title = "Total number of deaths wrt time") + geom_smooth(se=F) + geom_smooth(se=F)
+
+ggplot(data = second, aes(x = date, y = new_deaths)) + geom_point() + labs(x = "Date", y = "deaths", title = "Total number of deaths wrt time") + geom_smooth(se=F) + geom_smooth(se=F)
+
+ggplot(data = third, aes(x = date, y = new_deaths)) + geom_point() + labs(x = "Date", y = "deaths", title = "Total number of deaths wrt time") + geom_smooth(se=F) + geom_smooth(se=F)
+```
+<br>This also follows the same trend as the number of new cases and positivity. <br>
+
+We can see the same trends being followed in India as well.<br>
+
+Positive rates comparison between the thre waves of COVID-19 in India
+```{r}
+data <- read.csv("COVIDdata.csv")
+data <- data[data$location == "India",]
+data$date <- as.Date(data$date, format = "%Y-%m-%d")
+
+first <- data
+first <- first[first$date >= "2020-01-25" & first$date <= "2020-12-28", ]
+
+second <- data
+second <- second[second$date >= "2021-01-01" & second$date <= "2021-12-31", ]
+
+third <- data
+third <- third[third$date >= "2022-01-25" & third$date <= "2022-12-28", ]
+
+ggplot(data = first, aes(x = date, y = new_cases)) + geom_point() + labs(x = "Date", y = "new cases", title = " number of new cases wrt time") + geom_smooth(se=F)
+
+ggplot(data = second, aes(x = date, y = new_cases)) + geom_point() + labs(x = "Date", y = "new cases", title = " number of new cases wrt time") + geom_smooth(se=F)
+
+ggplot(data = third, aes(x = date, y = new_cases)) + geom_point() + labs(x = "Date", y = "new cases", title = " number of new cases wrt time") + geom_smooth(se=F)
+```
+<br>The number of cases slowly increased in the second half of 2020. Then it decreased by december and january in 2021. But then we went into 2nd wave of COVID where it peaked once again in March and April. This decreased over time in the rest of the year, and this decrease is being observed in 2022 also.
+<br>
+Positive rates comparison between the three waves of COVID-19 in India<br>
+```{r}
+ggplot(data = first, aes(x = date, y = positive_rate)) + geom_point() + labs(x = "Date", y = "positive cases", title = "Positive rates wrt time") + geom_smooth()
+
+ggplot(data = second, aes(x = date, y = positive_rate)) + geom_point() + labs(x = "Date", y = "positive cases", title = "Positive rates wrt time") + geom_smooth()
+
+ggplot(data = third, aes(x = date, y = positive_rate)) + geom_point() + labs(x = "Date", y = "positive cases", title = "Positive rates wrt time") + geom_smooth()
+```
+<br>As mentioned above, the similar trend is being followed by positive rates too
+<br>
+<br>New deaths comparison between the thre waves of COVID-19 in India
+```{r}
+ggplot(data = first, aes(x = date, y = new_deaths)) + geom_point() + labs(x = "Date", y = "Deaths", title = "Total number of Deaths wrt time") + geom_smooth()
+
+ggplot(data = second, aes(x = date, y = new_deaths)) + geom_point() + labs(x = "Date", y = "Deaths", title = "Total number of Deaths wrt time") + geom_smooth()
+
+ggplot(data = third, aes(x = date, y = new_deaths)) + geom_point() + labs(x = "Date", y = "Deaths", title = "Total number of Deaths wrt time") + geom_smooth()
+```
+<br>As mentioned above, the similar trend is being followed by deaths too. 
+
+<br>
+<br>Now, we will move to question 4 and 5<br>
+<br>
+Forecasting:
+```{r}
+new_cases_forecasts2 <- forecast:::forecast.HoltWinters(new_cases_forecasts, h=30)
+plot(forecast(new_cases_forecasts2))
+```
+
+<br>
+SMA:
+```{r}
+data <- read.csv("COVIDdata.csv")
+data <- data[data$location == "India",]
+data$date <- as.Date(data$date, format = "%Y-%m-%d")
+
+data <- data[complete.cases(data$new_cases),]
+
+new_cases_rep <- ts(data$new_cases)
+new_cases_sma <- SMA(new_cases_rep,n=3)
+plot(new_cases_sma)
+```
+<br>
+
+```{r}
+ma2 <- SMA(data$new_cases, level=.95, frequency=2)
+ma2
+fma2 <- forecast(ma2, h=30)
+fma2
+plot(fma2)
+```
+
+<br>ARIMA:
+```{r}
+arima_model <- auto.arima(new_cases_rep)
+summary(arima_model)
+```
+
+<br>
+```{r}
+SMA_model <- SMA(new_cases_rep,n=3)
+summary(SMA_model)
+```
+<br>
+EMA:
+```{r}
+EMA_model <- EMA(new_cases_rep,n=3)
+summary(EMA_model)
+```
+<br>
+Construct the model using the Simple moving average, Exponential Moving Average and ARIMA to forecast the Covid19 Dataset.
+
+```{r}
+autoplot(acf(na.omit(SMA_model),plot=FALSE))+ labs(title="ACF Plot")
+```
+<br>
+```{r}
+autoplot(pacf(na.omit(SMA_model),plot=FALSE))+ labs(title="PACF Plot")
+```
+
+<br>
+```{r}
+autoplot(acf(na.omit(EMA_model),plot=FALSE))+ labs(title="ACF Plot")
+```
+<br>
+```{r}
+autoplot(pacf(na.omit(EMA_model),plot=FALSE))+ labs(title="PACF Plot")
+```
+
